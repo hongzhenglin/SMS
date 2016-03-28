@@ -94,8 +94,9 @@ class SiteController extends Controller
         return $this->render('about');
     }
     
-    public function actionSay($message = 'hello'){
-    		return $this->render('say',['message'=>$message]);
+    public function actionSay(){
+    		//$response = file_get_contents("php://input");
+    		echo json_encode($_REQUEST);
     }
     
     /**
