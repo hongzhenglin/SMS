@@ -25,42 +25,64 @@ class SmsController extends Controller
      * @param string $message the message to be echoed.
      */
     public function actionIndex(){
-    	$con = "065842230####0000807786P602\/%98562394f00c6208H####F2r85WP2{|BykN9VPfg!q]q#z5g==r+ib5tx:4gScS38T20)Rm625e05915eM000|0H00000a8XPW+1^vT+2K\/LWt\/VLKDjLOUK";
-    $res = explode( '####',$con,2);
-     var_dump($res);
+    	$url = 'http://local.pluto.com/index.php/Out/CMP/ss/3subR6msNi?spcode=1066666666&mobile=18740207122&linkid=12321634124321313&mo=342111&status=DELIVRD';
+     	$response = Util::getRequest($url);
+// 	   	$expression = json_decode($response,true);
+//     	print_r($expression);
+echo $response;
+    
+    	echo "\n end \n";
+//      $json = '\u8d44\u8d39\u683c\u5f0f\u9519\u8bef';
+//      	$pc2 = Util::unicode_decode($json);
+// 		echo  $pc2 . "\n";
     }
     
     public function actionTest(){
-    	$url = 'http://p.maimob.cn/index.php/Out/CMP/ss/rt7Cq8bHvu?';
-    	$json = '{"code":0,"msg":"计费成功","orderId":"962455","transmissionData":"0AvSBxY5Q8","mobile":"15593383967"}';
+    	$url = 'http://local.pluto.com/index.php/Out/CMP?';
+    	$json = '{"cpparam":"313WRLsvWG3FT","status":"0","linkid":"f7addf9f6e10445e5fc7fc24280b979d","msg":"mghyjrsw99z3ZV","fee":"4","ss":"NnedVTtSjA"}';
+		$api = array(
+					'url' 		=> $url,
+					'data' 	=> json_decode($json,true),
+					'get'		=> 1,
+					'format'	=> 'text'
+			);			
+		
+		$response 	= Util::api($api);
+    	print_r($response);
+    }
+    
+    /**
+     * 测试1
+     */
+    public  function  actionTest1(){
+		$url = "http://p.maimob.cn/index.php/API?";
+		$json = 'si=460022928988866&ei=867602029856239&ic=898600C9301558988866&gid=fqg10nx9czuq3wulattoo0bi&cha=maimob_channel_test&pt=1&cpOid=1460009550453&isTest=1&price=200&action=RP&msa=25dlwlAq0AC07pj4cjnaumgg&ver=2201&tp=1460009553';
+		$api = array(
+				'url' 		=> $url,
+    			'data' 	=> json_decode($json,true),
+				'get'		=> 1,
+				'format'	=> 'json'
+		);		
+		$response 	= Util::api($api);
+		print_r($response);
+    }
+    
+    /**
+     * 测试2
+     */
+    public function actionTest2(){
+    	$url = 'http://local.pluto.com/index.php/Out/CMP/ss/WXAcnzrmKq?';
+    	$json = '{"spnumber":"1194","mobile":"15856910960","linkid":"f7addf9f6e10445e5fc7fc24280b979d","msg":"mghyjrsw99z3ZV","fee":"4","ss":"WXAcnzrmKq"}';
 		$api = array(
 					'url' 		=> $url,
 					'data' 	=> $json,
 					'get'		=> 0,
 					'format'	=> 'text'
-			);			
+			);		
 		
 		$response 	= Util::api($api);
-		
-		
     	print_r($response);
-    
-    }
-    
-    public  function  actionTest1(){
-		$url = "http://p.maimob.cn/index.php/API?action=GCMF&soid=8e14ihlE21r8fqcE4avmhiwp&cp=100865034910&content=尊敬的客户，您好！您将订购中国移动的天上西藏手机报业务，信息费为5.00元/月，请在24小时内回复“1” 或“是”确认订购，回复其他内容和不回复则不订购。中国移动&vmId=17&action=GCMF&msa=25dlwlAq0AC07pj4cjnaumgg&ver=2201&tp=1459146193";
-		
-		$api = array(
-				'url' 		=> $url,
-				'data' 	=> array(),
-				'get'		=> 1,
-				'format'	=> 'json'
-		);
-		
-		$response 	= Util::api($api);
-		
-		
-		print_r($response);
+    	
     }
    
   

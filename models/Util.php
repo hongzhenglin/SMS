@@ -296,4 +296,102 @@ class Util {
 		return isset($arr[$key]) ? $arr[$key] : $val;
 	}
 	
+	
+	/**
+	 * post一个数组
+	 * @param unknown $url
+	 * @param unknown $array
+	 * @param unknown $header
+	 * @return mixed
+	 */
+	public static function postArray($url, $array, $header=array(),$timeout=0){
+		$str = '';
+		if ($array) {
+			foreach ($array as $k => $v) {
+				$str .= $k . '=' . urlencode($v) . '&';
+			}
+			$str = substr($str, 0, -1);
+		}
+		return self::postRequest($url, $str, $header);
+	}
+	
+	/**
+	 * 发出一个POST请求
+	 * @param String $url	请求的地址
+	 * @param String $data	数据
+	 */
+	public static function postRequest($url, $data, $header=array(),$timeout=0){
+		$ch = curl_init();
+		curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,0);
+		curl_setopt($ch,CURLOPT_COOKIEJAR,null);
+		if ($header) {
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+		}
+		if ($timeout && is_numeric($timeout) && $timeout > 0) {
+			curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+		}
+		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch,CURLOPT_URL,$url);
+		curl_setopt($ch,CURLOPT_POST,true);
+		curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+		$content = curl_exec($ch);
+		return $content;
+	}
+	
+	/**
+	 * 发出一个Get请求
+	 * @param String $url	请求的地址
+	 */
+	public static function getRequest($url){
+		$ch = curl_init($url) ;
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true) ; // 获取数据返回
+		curl_setopt($ch, CURLOPT_BINARYTRANSFER, true) ; // 在启用 CURLOPT_RETURNTRANSFER 时候将获取数据返回
+		return curl_exec($ch) ;
+	}
+	
+	// 将UNICODE编码后的内容进行解码
+	public static function unicode_decode($name){
+		// 转换编码，将Unicode编码转换成可以浏览的utf-8编码
+		$pattern = '/([\w]+)|(\\\u([\w]{4}))/i';
+		preg_match_all($pattern, $name, $matches);
+		if (!empty($matches))
+		{
+			$name = '';
+			for ($j = 0; $j < count($matches[0]); $j++)
+			{
+				$str = $matches[0][$j];
+				if (strpos($str, '\\u') === 0)
+				{
+					$code = base_convert(substr($str, 2, 2), 16, 10);
+					$code2 = base_convert(substr($str, 4), 16, 10);
+					$c = chr($code).chr($code2);
+					$c = iconv('UCS-2', 'UTF-8', $c);
+					$name .= $c;
+				}
+				else
+				{
+					$name .= $str;
+				}
+			}
+		}
+		return $name;
+	}
+	
+	//字符串转十六进制
+	public static function strToHex($string){
+		$hex="";
+		for($i=0;$i<strlen($string);$i++)
+			$hex.=dechex(ord($string[$i]));
+		$hex=strtoupper($hex);
+		return $hex;
+	}
+	
+	//十六进制转字符串
+	public static function hexToStr($hex){
+		$string="";
+		for($i=0;$i<strlen($hex)-1;$i+=2)
+			$string.=chr(hexdec($hex[$i].$hex[$i+1]));
+		return  $string;
+	}
+	
 }
