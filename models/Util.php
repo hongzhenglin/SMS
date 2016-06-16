@@ -394,4 +394,46 @@ class Util {
 		return  $string;
 	}
 	
+	/**
+	 * 数组转字符串
+	 * @param array $array
+	 */
+	public static function arrayToStr(array $array){
+		$str = '';
+		if(!is_array($array)){
+			return $str;
+		}
+		foreach ($array as $key=>$value){
+			if(is_string($value)){
+				$str .= "\n{$key}:{$value}";
+			}elseif (is_array($value)){
+				$value = self::arrayToStr($value);
+				$str .= "\n{$key}:{$value}";
+			}elseif (is_bool($value)){
+				$value = $value == true ? 'true' : 'false';
+				$str .= "\n{$key}:{$value}";
+			}
+		}
+		return $str;
+	}
+	
+
+	/**
+	 * 格式化API响应结果为数组
+	 * @param string $response
+	 * @param string $format: json(默认)、xml
+	 * @return multitype:
+	 */
+	public static function formatResponse($response,$format='json'){
+		switch (strtolower($format)){
+			case 'xml' :
+				$arr = json_decode(json_encode((array) simplexml_load_string($response)), true);
+				break;
+			default:
+				$arr = json_decode($response,true);
+				break;
+		}
+		return $arr;
+	}
+	
 }
