@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
+use app\models\database\MSCharge;
 
 /* @var $this yii\web\View */
 /* @var $model app\models\database\ChargeBill */
@@ -28,17 +29,12 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
-            'id',
-            'mobile',
-            'imsi',
-            'provider',
-            'province',
-            'fee',
-            'status',
-            'chargeTime:datetime',
-            'recordTime:datetime',
-            'updateTime:datetime',
-        ],
-    ]) ?>
+        	['label' => "运营商",'value' => MSCharge::getProviderNameById($model->provider),],
+        	['label' => "省份",'value' => MSCharge::getProvinceNameById($model->province),],
+        	'mobile',
+        	'fee',
+        	['label' => "状态",'value' => MSCharge::getStatusMsg($model->status),],
+        	['label' => "充值时间",'value' => date('Y-m-d H:i:s',$model->chargeTime),]    		
+    ]]) ?>
 
 </div>

@@ -9,10 +9,9 @@ use Yii;
  *
  * @property integer $id
  * @property string $mobile
- * @property string $imsi
  * @property integer $provider
  * @property integer $province
- * @property string $fee
+ * @property integer $fee
  * @property integer $status
  * @property integer $chargeTime
  * @property integer $recordTime
@@ -34,10 +33,9 @@ class ChargeBill extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['provider', 'province', 'status', 'chargeTime', 'recordTime', 'updateTime'], 'integer'],
+            [['provider', 'province', 'fee', 'status'], 'integer'],
             [['mobile'], 'string', 'max' => 11],
-            [['imsi'], 'string', 'max' => 16],
-            [['fee'], 'string', 'max' => 45]
+        	[['provider', 'province', 'fee', 'mobile','chargeTime'], 'required'],
         ];
     }
 
@@ -49,7 +47,6 @@ class ChargeBill extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'mobile' => '手机号',
-            'imsi' => 'IMSI',
             'provider' => '运营商',
             'province' => '省份',
             'fee' => '金额',
@@ -58,14 +55,5 @@ class ChargeBill extends \yii\db\ActiveRecord
             'recordTime' => '记录时间',
             'updateTime' => '更新时间',
         ];
-    }
-
-    /**
-     * @inheritdoc
-     * @return ChargeBillQuery the active query used by this AR class.
-     */
-    public static function find()
-    {
-        return new ChargeBillQuery(get_called_class());
     }
 }

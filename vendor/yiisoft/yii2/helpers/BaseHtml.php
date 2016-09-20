@@ -119,7 +119,7 @@ class BaseHtml
 
     /**
      * Generates a complete HTML tag.
-     * @param string $name the tag name
+     * @param string|boolean|null $name the tag name. If $name is `null` or `false`, the corresponding content will be rendered without any tag.
      * @param string $content the content to be enclosed between the start and end tags. It will not be HTML-encoded.
      * If this is coming from end users, you should consider [[encode()]] it to prevent XSS attacks.
      * @param array $options the HTML tag attributes (HTML options) in terms of name-value pairs.
@@ -137,13 +137,16 @@ class BaseHtml
      */
     public static function tag($name, $content = '', $options = [])
     {
+        if ($name === null || $name === false) {
+            return $content;
+        }
         $html = "<$name" . static::renderTagAttributes($options) . '>';
         return isset(static::$voidElements[strtolower($name)]) ? $html : "$html$content</$name>";
     }
 
     /**
      * Generates a start tag.
-     * @param string $name the tag name
+     * @param string|boolean|null $name the tag name. If $name is `null` or `false`, the corresponding content will be rendered without any tag.
      * @param array $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.
@@ -154,18 +157,24 @@ class BaseHtml
      */
     public static function beginTag($name, $options = [])
     {
+        if ($name === null || $name === false) {
+            return '';
+        }
         return "<$name" . static::renderTagAttributes($options) . '>';
     }
 
     /**
      * Generates an end tag.
-     * @param string $name the tag name
+     * @param string|boolean|null $name the tag name. If $name is `null` or `false`, the corresponding content will be rendered without any tag.
      * @return string the generated end tag
      * @see beginTag()
      * @see tag()
      */
     public static function endTag($name)
     {
+        if ($name === null || $name === false) {
+            return '';
+        }
         return "</$name>";
     }
 
@@ -372,6 +381,14 @@ class BaseHtml
      * @param array|string|null $url the URL for the hyperlink tag. This parameter will be processed by [[Url::to()]]
      * and will be used for the "href" attribute of the tag. If this parameter is null, the "href" attribute
      * will not be generated.
+     *
+     * If you want to use an absolute url you can call [[Url::to()]] yourself, before passing the URL to this method,
+     * like this:
+     *
+     * ```php
+     * Html::a('link text', Url::to($url, true))
+     * ```
+     *
      * @param array $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.
@@ -655,46 +672,33 @@ class BaseHtml
      * Generates a radio button input.
      * @param string $name the name attribute.
      * @param boolean $checked whether the radio button should be checked.
-     * @param array $options the tag options in terms of name-value pairs. The following options are specially handled:
-     *
-     * - uncheck: string, the value associated with the uncheck state of the radio button. When this attribute
-     *   is present, a hidden input will be generated so that if the radio button is not checked and is submitted,
-     *   the value of this attribute will still be submitted to the server via the hidden input.
-     * - label: string, a label displayed next to the radio button.  It will NOT be HTML-encoded. Therefore you can pass
-     *   in HTML code such as an image tag. If this is is coming from end users, you should [[encode()]] it to prevent XSS attacks.
-     *   When this option is specified, the radio button will be enclosed by a label tag.
-     * - labelOptions: array, the HTML attributes for the label tag. Do not set this option unless you set the "label" option.
-     *
-     * The rest of the options will be rendered as the attributes of the resulting radio button tag. The values will
-     * be HTML-encoded using [[encode()]]. If a value is null, the corresponding attribute will not be rendered.
-     * See [[renderTagAttributes()]] for details on how attributes are being rendered.
+     * @param array $options the tag options in terms of name-value pairs.
+     * See [[booleanInput()]] for details about accepted attributes.
      *
      * @return string the generated radio button tag
      */
     public static function radio($name, $checked = false, $options = [])
     {
-        $options['checked'] = (bool) $checked;
-        $value = array_key_exists('value', $options) ? $options['value'] : '1';
-        if (isset($options['uncheck'])) {
-            // add a hidden field so that if the radio button is not selected, it still submits a value
-            $hidden = static::hiddenInput($name, $options['uncheck']);
-            unset($options['uncheck']);
-        } else {
-            $hidden = '';
-        }
-        if (isset($options['label'])) {
-            $label = $options['label'];
-            $labelOptions = isset($options['labelOptions']) ? $options['labelOptions'] : [];
-            unset($options['label'], $options['labelOptions']);
-            $content = static::label(static::input('radio', $name, $value, $options) . ' ' . $label, null, $labelOptions);
-            return $hidden . $content;
-        } else {
-            return $hidden . static::input('radio', $name, $value, $options);
-        }
+        return static::booleanInput('radio', $name, $checked, $options);
     }
 
     /**
      * Generates a checkbox input.
+     * @param string $name the name attribute.
+     * @param boolean $checked whether the checkbox should be checked.
+     * @param array $options the tag options in terms of name-value pairs.
+     * See [[booleanInput()]] for details about accepted attributes.
+     *
+     * @return string the generated checkbox tag
+     */
+    public static function checkbox($name, $checked = false, $options = [])
+    {
+        return static::booleanInput('checkbox', $name, $checked, $options);
+    }
+
+    /**
+     * Generates a boolean input.
+     * @param string $type the input type. This can be either `radio` or `checkbox`.
      * @param string $name the name attribute.
      * @param boolean $checked whether the checkbox should be checked.
      * @param array $options the tag options in terms of name-value pairs. The following options are specially handled:
@@ -712,8 +716,9 @@ class BaseHtml
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      *
      * @return string the generated checkbox tag
+     * @since 2.0.9
      */
-    public static function checkbox($name, $checked = false, $options = [])
+    protected static function booleanInput($type, $name, $checked = false, $options = [])
     {
         $options['checked'] = (bool) $checked;
         $value = array_key_exists('value', $options) ? $options['value'] : '1';
@@ -728,10 +733,10 @@ class BaseHtml
             $label = $options['label'];
             $labelOptions = isset($options['labelOptions']) ? $options['labelOptions'] : [];
             unset($options['label'], $options['labelOptions']);
-            $content = static::label(static::input('checkbox', $name, $value, $options) . ' ' . $label, null, $labelOptions);
+            $content = static::label(static::input($type, $name, $value, $options) . ' ' . $label, null, $labelOptions);
             return $hidden . $content;
         } else {
-            return $hidden . static::input('checkbox', $name, $value, $options);
+            return $hidden . static::input($type, $name, $value, $options);
         }
     }
 
@@ -859,7 +864,8 @@ class BaseHtml
      * @param array $options options (name => config) for the checkbox list container tag.
      * The following options are specially handled:
      *
-     * - tag: string|false, the tag name of the container element. False to render radio buttons without container.
+     * - tag: string|false, the tag name of the container element. False to render checkbox without container.
+     *   See also [[tag()]].
      * - unselect: string, the value that should be submitted when none of the checkboxes is selected.
      *   By setting this option, a hidden input will be generated.
      * - encode: boolean, whether to HTML-encode the checkbox labels. Defaults to true.
@@ -897,8 +903,8 @@ class BaseHtml
         $index = 0;
         foreach ($items as $value => $label) {
             $checked = $selection !== null &&
-                (!is_array($selection) && !strcmp($value, $selection)
-                    || is_array($selection) && in_array($value, $selection));
+                (!ArrayHelper::isTraversable($selection) && !strcmp($value, $selection)
+                    || ArrayHelper::isTraversable($selection) && ArrayHelper::isIn($value, $selection));
             if ($formatter !== null) {
                 $lines[] = call_user_func($formatter, $index, $label, $name, $checked, $value);
             } else {
@@ -939,6 +945,7 @@ class BaseHtml
      * The following options are specially handled:
      *
      * - tag: string|false, the tag name of the container element. False to render radio buttons without container.
+     *   See also [[tag()]].
      * - unselect: string, the value that should be submitted when none of the radio buttons is selected.
      *   By setting this option, a hidden input will be generated.
      * - encode: boolean, whether to HTML-encode the checkbox labels. Defaults to true.
@@ -975,8 +982,8 @@ class BaseHtml
         $index = 0;
         foreach ($items as $value => $label) {
             $checked = $selection !== null &&
-                (!is_array($selection) && !strcmp($value, $selection)
-                    || is_array($selection) && in_array($value, $selection));
+                (!ArrayHelper::isTraversable($selection) && !strcmp($value, $selection)
+                    || ArrayHelper::isTraversable($selection) && ArrayHelper::isIn($value, $selection));
             if ($formatter !== null) {
                 $lines[] = call_user_func($formatter, $index, $label, $name, $checked, $value);
             } else {
@@ -1192,6 +1199,7 @@ class BaseHtml
      * The following options are specially handled:
      *
      * - tag: this specifies the tag name. If not set, "div" will be used.
+     *   See also [[tag()]].
      * - encode: boolean, if set to false then the error message won't be encoded.
      *
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
@@ -1379,47 +1387,14 @@ class BaseHtml
      * @param Model $model the model object
      * @param string $attribute the attribute name or expression. See [[getAttributeName()]] for the format
      * about attribute expression.
-     * @param array $options the tag options in terms of name-value pairs. The following options are specially handled:
-     *
-     * - uncheck: string, the value associated with the uncheck state of the radio button. If not set,
-     *   it will take the default value '0'. This method will render a hidden input so that if the radio button
-     *   is not checked and is submitted, the value of this attribute will still be submitted to the server
-     *   via the hidden input. If you do not want any hidden input, you should explicitly set this option as null.
-     * - label: string, a label displayed next to the radio button.  It will NOT be HTML-encoded. Therefore you can pass
-     *   in HTML code such as an image tag. If this is is coming from end users, you should [[encode()]] it to prevent XSS attacks.
-     *   The radio button will be enclosed by the label tag. Note that if you do not specify this option, a default label
-     *   will be used based on the attribute label declaration in the model. If you do not want any label, you should
-     *   explicitly set this option as null.
-     * - labelOptions: array, the HTML attributes for the label tag. This is only used when the "label" option is specified.
-     *
-     * The rest of the options will be rendered as the attributes of the resulting tag. The values will
-     * be HTML-encoded using [[encode()]]. If a value is null, the corresponding attribute will not be rendered.
-     * See [[renderTagAttributes()]] for details on how attributes are being rendered.
+     * @param array $options the tag options in terms of name-value pairs.
+     * See [[booleanInput()]] for details about accepted attributes.
      *
      * @return string the generated radio button tag
      */
     public static function activeRadio($model, $attribute, $options = [])
     {
-        $name = isset($options['name']) ? $options['name'] : static::getInputName($model, $attribute);
-        $value = static::getAttributeValue($model, $attribute);
-
-        if (!array_key_exists('value', $options)) {
-            $options['value'] = '1';
-        }
-        if (!array_key_exists('uncheck', $options)) {
-            $options['uncheck'] = '0';
-        }
-        if (!array_key_exists('label', $options)) {
-            $options['label'] = static::encode($model->getAttributeLabel(static::getAttributeName($attribute)));
-        }
-
-        $checked = "$value" === "{$options['value']}";
-
-        if (!array_key_exists('id', $options)) {
-            $options['id'] = static::getInputId($model, $attribute);
-        }
-
-        return static::radio($name, $checked, $options);
+        return static::activeBooleanInput('radio', $model, $attribute, $options);
     }
 
     /**
@@ -1428,26 +1403,29 @@ class BaseHtml
      * @param Model $model the model object
      * @param string $attribute the attribute name or expression. See [[getAttributeName()]] for the format
      * about attribute expression.
-     * @param array $options the tag options in terms of name-value pairs. The following options are specially handled:
-     *
-     * - uncheck: string, the value associated with the uncheck state of the radio button. If not set,
-     *   it will take the default value '0'. This method will render a hidden input so that if the radio button
-     *   is not checked and is submitted, the value of this attribute will still be submitted to the server
-     *   via the hidden input. If you do not want any hidden input, you should explicitly set this option as null.
-     * - label: string, a label displayed next to the checkbox.  It will NOT be HTML-encoded. Therefore you can pass
-     *   in HTML code such as an image tag. If this is is coming from end users, you should [[encode()]] it to prevent XSS attacks.
-     *   The checkbox will be enclosed by the label tag. Note that if you do not specify this option, a default label
-     *   will be used based on the attribute label declaration in the model. If you do not want any label, you should
-     *   explicitly set this option as null.
-     * - labelOptions: array, the HTML attributes for the label tag. This is only used when the "label" option is specified.
-     *
-     * The rest of the options will be rendered as the attributes of the resulting tag. The values will
-     * be HTML-encoded using [[encode()]]. If a value is null, the corresponding attribute will not be rendered.
-     * See [[renderTagAttributes()]] for details on how attributes are being rendered.
+     * @param array $options the tag options in terms of name-value pairs.
+     * See [[booleanInput()]] for details about accepted attributes.
      *
      * @return string the generated checkbox tag
      */
     public static function activeCheckbox($model, $attribute, $options = [])
+    {
+        return static::activeBooleanInput('checkbox', $model, $attribute, $options);
+    }
+
+    /**
+     * Generates a boolean input
+     * This method is mainly called by [[activeCheckbox()]] and [[activeRadio()]].
+     * @param string $type the input type. This can be either `radio` or `checkbox`.
+     * @param Model $model the model object
+     * @param string $attribute the attribute name or expression. See [[getAttributeName()]] for the format
+     * about attribute expression.
+     * @param array $options the tag options in terms of name-value pairs.
+     * See [[booleanInput()]] for details about accepted attributes.
+     * @return string the generated input element
+     * @since 2.0.9
+     */
+    protected static function activeBooleanInput($type, $model, $attribute, $options = [])
     {
         $name = isset($options['name']) ? $options['name'] : static::getInputName($model, $attribute);
         $value = static::getAttributeValue($model, $attribute);
@@ -1468,7 +1446,7 @@ class BaseHtml
             $options['id'] = static::getInputId($model, $attribute);
         }
 
-        return static::checkbox($name, $checked, $options);
+        return static::$type($name, $checked, $options);
     }
 
     /**
@@ -1582,7 +1560,8 @@ class BaseHtml
      * @param array $options options (name => config) for the checkbox list container tag.
      * The following options are specially handled:
      *
-     * - tag: string, the tag name of the container element.
+     * - tag: string|false, the tag name of the container element. False to render checkbox without container.
+     *   See also [[tag()]].
      * - unselect: string, the value that should be submitted when none of the checkboxes is selected.
      *   You may set this option to be null to prevent default value submission.
      *   If this option is not set, an empty string will be submitted.
@@ -1623,7 +1602,8 @@ class BaseHtml
      * @param array $options options (name => config) for the radio button list container tag.
      * The following options are specially handled:
      *
-     * - tag: string, the tag name of the container element.
+     * - tag: string|false, the tag name of the container element. False to render radio button without container.
+     *   See also [[tag()]].
      * - unselect: string, the value that should be submitted when none of the radio buttons is selected.
      *   You may set this option to be null to prevent default value submission.
      *   If this option is not set, an empty string will be submitted.
@@ -1727,9 +1707,11 @@ class BaseHtml
             } else {
                 $attrs = isset($options[$key]) ? $options[$key] : [];
                 $attrs['value'] = (string) $key;
-                $attrs['selected'] = $selection !== null &&
-                        (!is_array($selection) && !strcmp($key, $selection)
-                        || is_array($selection) && in_array($key, $selection));
+                if (!array_key_exists('selected', $attrs)) {
+                    $attrs['selected'] = $selection !== null &&
+                        (!ArrayHelper::isTraversable($selection) && !strcmp($key, $selection)
+                        || ArrayHelper::isTraversable($selection) && ArrayHelper::isIn($key, $selection));
+                }
                 $text = $encode ? static::encode($value) : $value;
                 if ($encodeSpaces) {
                     $text = str_replace(' ', '&nbsp;', $text);
