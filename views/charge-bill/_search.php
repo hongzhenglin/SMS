@@ -11,7 +11,7 @@ use dosamigos\datetimepicker\DateTimePicker;
 ?>
 <?php
 $providers = MSCharge::getAllProvider ();
-$provinces = MSCharge::getAllProvince ();
+$provinces = MSCharge::getAllProvinceByProvider ();
 $mobiles = MSCharge::getAllMobile ();
 $simcards = MSCharge::getAllSimCard ();
 ?>

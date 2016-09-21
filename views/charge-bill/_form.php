@@ -12,9 +12,10 @@ use dosamigos\datetimepicker\DateTimePicker;
 <div class="charge-bill-form">
 <?php
 $providers = MSCharge::getAllProvider ();
-$provinces = MSCharge::getAllProvince ();
+$provinces = MSCharge::getAllProvinceByProvider (1);
 $mobiles = MSCharge::getAllMobile ();
 $simcards = MSCharge::getAllSimCard ();
+$provincesInfo = MSCharge::getAllProvinceInfo();
 ?>
 
     <?php $form = ActiveForm::begin(['options'=> ['style'=>'margin:0px;display:inline;']]); ?>
@@ -22,10 +23,10 @@ $simcards = MSCharge::getAllSimCard ();
      <tr >
      <td>
      <?=$form->field ( $model, 'provider' )->dropDownList ( $providers, [ 'style' => 'width:150px','onchange' => '
-           ' ] )->label ( '运营商' );?>
+           onchangeProvider()' ] )->label ( '运营商' );?>
      </td>
      <td>
-      <?=$form->field ( $model, 'province' )->dropDownList ( $provinces, [ 'style' => 'width:150px','prompt'=>'选择省份','onchange' => '
+      <?=$form->field ( $model, 'province' )->dropDownList ( $provinces, [ 'style' => 'width:150px','prompt'=>'','onchange' => '
           onchangeProvince() ' ] )->label ( '省份' );?>
      </td>
      <td>
@@ -70,6 +71,30 @@ $simcards = MSCharge::getAllSimCard ();
 <!--
 
 //-->
+var provinces = <?= json_encode($provincesInfo)?>;
+function onchangeProvider(){
+	var provider = $('#chargebill-provider').val();
+	
+	var html = "";
+	var providerType = 0;
+	$.each(provinces, function(i, province) {
+		if(province['cmcc'] == 1){
+			providerType = 1;
+		}else if(province['cuc'] == 1){
+			providerType = 2;
+		}else if(province['cnc'] == 1){
+			providerType = 3;
+		}else{
+			providerType = 0;
+		}		
+		if( provider == providerType ){
+			 html += '<option value="' + province['id'] + '">' + province['name'] + '</option>';
+		}
+	});	
+	$('#chargebill-province').html(html);
+	
+}
+
 var simcards = <?= json_encode($simcards)?>;
 function onchangeProvince(){
 	var provider = $('#chargebill-provider').val();
@@ -82,5 +107,6 @@ function onchangeProvince(){
 	});	
 	$('#chargebill-mobile').html(html);
 }
+
    
 </script>

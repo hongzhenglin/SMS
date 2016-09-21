@@ -5,6 +5,7 @@ namespace app\models\database;
 use yii;
 use app\models\database\Province;
 use app\models\database\SimCard;
+use yii\helpers\ArrayHelper;
 
 class MSCharge {
 	
@@ -27,21 +28,43 @@ class MSCharge {
 	
 	/* 获取省份的名字 */
 	public static function getProvinceNameById($id) {
-		$cacheInfo = self::getAllProvince ();
+		$cacheInfo = self::getAllProvinceByProvider ();
 		return $cacheInfo && isset ( $cacheInfo [$id] ) ? $cacheInfo [$id] : '';
 	}
 	
 	/* 获取省份的cache信息 */
-	public static function getAllProvince() {
+	public static function getAllProvinceByProvider($provider = 1 ) {
+		$res = array ();
+		$provinces = self::getALlProvinceInfo ();
+		$com = [1=>'cmcc',2=>'cuc',3 => 'cnc'];
+		foreach ( $provinces as $province ) {					 
+			if ($provider == 0 || ( $provider && $province[$com[$provider]] == 1) ){
+				$res [$province ['id']] =  $province ['name'];
+			}			
+		}
+		return $res;
+	}
+	
+	/**
+	 * 获取所有省份信息
+	 * @return mixed|unknown[]
+	 */
+	public static function getAllProvinceInfo(){
 		$res = array ();
 		try {
 			$cacheKey = 'MIIPAY_PROVINCE_LIST';
 			$cacheInfo = Yii::$app->cache->get ( $cacheKey );
 			$res = json_decode ( $cacheInfo, TRUE );
-			if (! $res) {
-				$msProvince = Province::find ()->all ();
+			if (true || ! $res) {
+				$msProvince = Yii::$app->db->createCommand ( "SELECT * FROM province WHERE id > 0 ORDER BY name desc " )->queryAll ();
 				foreach ( $msProvince as $province ) {
-					$res [$province->id] = $province->name;
+					$res [$province ['id']] = [
+							'id' => $province ['id'],
+							'name' => $province ['name'],
+							'cmcc' => $province ['cmcc'],
+							'cuc' => $province ['cuc'],
+							'cnc' => $province ['cnc']
+					];
 				}
 				Yii::$app->cache->set ( $cacheKey, json_encode ( $res ) );
 			}
@@ -57,18 +80,18 @@ class MSCharge {
 			$cacheKey = 'MIIPAY_SimCard_LIST';
 			$cacheInfo = Yii::$app->cache->get ( $cacheKey );
 			// $res = json_decode ( $cacheInfo, TRUE );
-			// if (! $res) {
-			$simCards = Yii::$app->db->createCommand ( "SELECT id,mobile,imsi,provider,province FROM simCard WHERE mobile !='' AND mobile != 0" )->queryAll ();
-			foreach ( $simCards as $simCard ) {
-				$res [$simCard ['id']] = [ 
-						'id' => $simCard ['id'],
-						'mobile' => $simCard ['mobile'],
-						'provider' => $simCard ['provider'],
-						'province' => $simCard ['province'] 
-				];
-			}
-			Yii::$app->cache->set ( $cacheKey, json_encode ( $res ) );
-			// }
+			 if (true || ! $res) {
+				$simCards = Yii::$app->db->createCommand ( "SELECT id,mobile,imsi,provider,province FROM simCard WHERE mobile !='' AND mobile != 0" )->queryAll ();
+				foreach ( $simCards as $simCard ) {
+					$res [$simCard ['id']] = [ 
+							'id' => $simCard ['id'],
+							'mobile' => $simCard ['mobile'],
+							'provider' => $simCard ['provider'],
+							'province' => $simCard ['province'] 
+					];
+				}
+				Yii::$app->cache->set ( $cacheKey, json_encode ( $res ) );
+			 }
 		} catch ( Exception $e ) {
 		}
 		return $res;
@@ -78,12 +101,8 @@ class MSCharge {
 	public static function getAllMobile() {
 		$res = array ();
 		$simcards = self::getAllSimCard ();
-		foreach ( $simcards as $simcard ) {
-			if (! isset ( $simcard ['mobile'] )) {
-				continue;
-			}
-			$res [$simcard ['mobile']] = $simcard ['mobile'];
-		}
+		$res = ArrayHelper::map($simcards, 'mobile', 'mobile');
+		sort($res);
 		return $res;
 	}
 	
@@ -96,9 +115,20 @@ class MSCharge {
 	}
 	
 	/**
+	 * 获取所有状态名称
+	 */
+	public static function getAllStatusMsg() {
+		return [
+				0 => "失败",
+				1 => "成功",
+		];
+	}
+	
+	/**
 	 * 获取状态名称
 	 */
-	public static function getStatusMsg($status){
-		return $status == 0 ? '失败' : '成功';
+	public static function getStatusMsg($id){
+		$cacheInfo = self::getAllStatusMsg ();
+		return $cacheInfo && isset ( $cacheInfo [$id] ) ? $cacheInfo [$id] : '';
 	}
 }
