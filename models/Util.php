@@ -85,6 +85,10 @@ class Util {
 			$ch = curl_init($url);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true) ;
 			curl_setopt($ch, CURLOPT_BINARYTRANSFER, true) ;
+			$header = self::_array($api, 'header',array());
+			if ($header) {
+				curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+			}
 		}else{
 			$ch = curl_init();
 			curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,0);
@@ -92,6 +96,10 @@ class Util {
 			curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
 			curl_setopt($ch,CURLOPT_URL,$url);
 			curl_setopt($ch,CURLOPT_POST,true);
+			$header = self::_array($api, 'header',array());
+			if ($header) {
+				curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+			}
 			curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
 			$url .= is_array($data) ? http_build_query($data): $data;			
 		}
@@ -434,6 +442,211 @@ class Util {
 				break;
 		}
 		return $arr;
+	}
+	
+	
+	public static function mobilePost($url,$data,$headers=array()) {
+		$headers = array();
+		$headers[] = 'Client Address: /192.168.199.240';
+		$headers[] = 'Host: cportal.migucitic.cmread.com:8117';
+		$headers[] = 'Connection: keep-alive';
+		$headers[] = 'Content-Length: 255';
+		$headers[] = 'Accept: application/json';
+		$headers[] = 'Origin: http://cportal.migucitic.cmread.com:8117';
+		$headers[] = 'X-Requested-With: XMLHttpRequest';
+		$headers[] = 'User-Agent: Mozilla/5.0 (Linux; Android 4.4.4; Che1-CL20 Build/Che1-CL20) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/37.0.0.0 Mobile MQQBrowser/6.2 TBS/036523 Safari/537.36 V1_AND_SQ_6.3.6_372_YYB_D QQ/6.3.6.2790 NetType/WIFI WebP/0.3.0 Pixel/720';
+		$headers[] = 'Content-Type: application/json;charset=UTF-8';
+		$headers[] = 'Accept-Encoding: gzip,deflate';
+		$headers[] = 'Accept-Language: zh-CN,en-US;q=0.8';
+		$headers[] = 'Referer :http://cportal.migucitic.cmread.com:8117/zxCallOutHtml5/html/passwordPage.html?nid=357966485&cm=M31F0008&uid=18701617138';
+		
+		$ch = curl_init();
+		curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,0);
+		curl_setopt($ch,CURLOPT_COOKIEJAR,null);
+		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch,CURLOPT_URL,$url);
+		curl_setopt($ch,CURLOPT_POST,true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+		$response =  trim(curl_exec($ch));
+		return $response;
+	}
+
+	/**
+	 * 测试根据imsi获取手机号前几位的成功率
+	 */
+	public function actionTest(){
+		//从数据库获取测试所需数据源
+		$simCards = SimCard::model()->findAll("id > 1");
+		//处理数据
+		if (!$simCards){
+			return '';
+		}
+		$i = 0;
+		$total = 0;
+		//遍历执行测试
+		for ($length = 2;$length<= 7;$length++	){
+			foreach ($simCards as $simCard){
+				$imsi = $simCard->imsi;
+				//过滤掉不合法的数据
+				if (strlen($imsi) != 15  || strlen($simCard->mobile) != 11 ){
+					continue;
+				}
+				//记录有效测试的总次数
+				$total++;
+				//执行一次测试：根据imsi获取手机号前7位
+				$mobile = self::GetPhoneByImsi($imsi);
+				//echo 'imsi:'.$imsi . '		mobile:'. $simCard->mobile.'		result:'. $mobile .PHP_EOL;
+				//记录测试成功的次数
+				if (substr($mobile,0,$length) == substr($simCard->mobile,0,$length)){
+					$i++;
+				}
+			}
+			$rate = $total != 0 ? sprintf("%10.2f", $i/$total * 100)  :'' ;
+			echo "length: $length,   total: $total ,success : $i , successRate:".$rate .'%'  .PHP_EOL;
+		}
+	}
+	
+	/**
+	 * 反编译IMSI获得手机前7位 判断区域
+	 * @param unknown $imsi
+	 * >返回手机号前七位伪码
+	 */
+	public static function GetPhoneByImsi($imsi){
+		$s56789 = "56789";
+		$strDigit;
+		
+		$beginStr = substr($imsi, 0,5);
+	
+		if ($beginStr == '46000'){
+			$h1 = substr($imsi, 5,1);
+			$h2 = substr($imsi, 6,1);
+			$h3 = substr($imsi, 7,1);
+			$st = substr($imsi, 8,1);
+			$h0 = substr($imsi, 9,1);
+			echo ""; 
+			if ( strstr($s56789,$st)){
+				return "13" .$st . "0" . $h1 . $h2 . $h3;
+			} else {
+				$tempint = intval($st) + 5;
+				return "13" . $tempint . $h0 . $h1 . $h2 . $h3;
+			}
+		}
+		 
+		 
+		if ($beginStr == '46002'){
+			$strDigit = substr($imsi, 5,1);
+			$h0 = substr($imsi, 6,1);
+			$h1 = substr($imsi, 7,1);
+			$h2 = substr($imsi, 8,1);
+			$h3 = substr($imsi, 9,1);
+			switch ($strDigit) {
+				case '0' :
+					$mobile = "134" ;
+					break;
+				case '1' :
+					$mobile = "151" ;
+					break;
+				case '2' :
+					$mobile = "152" ;
+					break;
+				case '3' :
+					$mobile = "150" ;
+					break;
+				case '5' :
+					$mobile = "183" ;
+					break;
+				case '6' :
+					$mobile = "182" ;
+					break;
+				case '7' :
+					$mobile = "187" ;
+					break;
+				case '8' :
+					$mobile = "158" ;
+					break;
+				case '9' :
+					$mobile = "159" ;
+					break;
+				default :
+					$mobile = '';
+					break;
+			}
+			if ($mobile){
+				return $mobile . $h0 . $h1 . $h2 . $h3;
+			}
+		}
+	
+		 
+	
+		 
+		if ($beginStr == '46003'){
+			$strDigit = substr($imsi, 5,1);
+			$h0 = substr($imsi, 6,1);
+			$h1 = substr($imsi, 7,1);
+			$h2 = substr($imsi, 8,1);
+			$h3 = substr($imsi, 9,1);
+			if ($strDigit){
+				return "153" . $h0 . $h1 . $h2 . $h3;
+			}
+			if ($h0 == "9" && $h1 . $$h2 == "00"){
+				return "13301" . $h3 .substr($imsi,10,1);
+			}
+			return "133" . $h0 . $h1 . $h2 . $h3;
+		}
+		if ($beginStr == '46011'){
+			$h0 = substr($imsi, 6,1);
+			$h1 = substr($imsi, 7,1);
+			$h2 = substr($imsi, 8,1);
+			$h3 = substr($imsi, 9,1);
+			return "177" . $h0 . $h1 . $h2 . $h3;
+		}
+		 
+		if ($beginStr == '46007'){
+			$strDigit = substr($imsi, 5,1);
+			$h0 = substr($imsi, 6,1);
+			$h1 = substr($imsi, 7,1);
+			$h2 = substr($imsi, 8,1);
+			$h3 = substr($imsi, 9,1);
+			 
+			if ($strDigit == "5"){
+				return "178" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "7") {
+				return "157" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "8"){
+				return "188" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "9"){
+				return "147" . $h0 . $h1 . $h2 . $h3;
+			}
+		}
+		 
+		 
+		if ($beginStr == '46001'){
+			//中国联通，只有46001这一个IMSI号码段
+			$h1 = substr($imsi, 5,1);
+			$h2 = substr($imsi, 6,1);
+			$h3 = substr($imsi, 7,1);
+			$h0 = substr($imsi, 8,1);
+			$strDigit = substr($imsi, 9,1);
+			if ($strDigit == "0" || $strDigit == "1"){
+				return "130" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "9"){
+				return "131" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "2") {
+				return "132" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "3"){
+				return "156" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "4"){
+				return "155" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "6"){
+				return "186" . $h0 . $h1 . $h2 . $h3;
+			}else if ($strDigit == "7"){
+				return "145" . $h0 . $h1 . $h2 . $h3;
+			}
+		}
+		 
+		return '';
+		 
 	}
 	
 }
