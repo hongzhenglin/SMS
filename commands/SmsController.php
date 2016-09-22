@@ -1,14 +1,15 @@
 <?php
+
 /**
  * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
  * @license http://www.yiiframework.com/license/
  */
-
 namespace app\commands;
 
 use yii\console\Controller;
 use app\models\Util;
+use app\models\database\Province;
 
 /**
  * This command echoes the first argument that you have entered.

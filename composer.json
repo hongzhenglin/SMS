@@ -23,7 +23,9 @@
         "yiisoft/yii2-codeception": "*",
         "yiisoft/yii2-debug": "*",
         "yiisoft/yii2-gii": "*",
-        "yiisoft/yii2-faker": "*"
+        "yiisoft/yii2-faker": "*",
+         "2amigos/yii2-date-time-picker-widget": "*",
+         "nkovacs/yii2-datetimepicker" : "*"
     },
     "config": {
         "process-timeout": 1800
@@ -50,5 +52,11 @@
             "npm-asset-library": "vendor/npm",
             "bower-asset-library": "vendor/bower"
         }
+    },
+    "repositories": {
+    "packagist": {
+        "type": "composer",
+        "url": "https://packagist.phpcomposer.com"
     }
+}
 }

@@ -18,8 +18,8 @@ class chargeBillSerach extends ChargeBill
     public function rules()
     {
         return [
-            [['id', 'provider', 'province', 'status', 'chargeTime', 'recordTime', 'updateTime'], 'integer'],
-            [['mobile', 'imsi', 'fee'], 'safe'],
+            [['id', 'provider', 'province', 'fee', 'status', 'chargeTime', 'recordTime', 'updateTime'], 'integer'],
+            [['mobile'], 'safe'],
         ];
     }
 
@@ -43,6 +43,8 @@ class chargeBillSerach extends ChargeBill
     {
         $query = ChargeBill::find();
 
+        // add conditions that should always apply here
+
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
@@ -55,19 +57,19 @@ class chargeBillSerach extends ChargeBill
             return $dataProvider;
         }
 
+        // grid filtering conditions
         $query->andFilterWhere([
             'id' => $this->id,
             'provider' => $this->provider,
             'province' => $this->province,
+            'fee' => $this->fee,
             'status' => $this->status,
             'chargeTime' => $this->chargeTime,
             'recordTime' => $this->recordTime,
             'updateTime' => $this->updateTime,
         ]);
 
-        $query->andFilterWhere(['like', 'mobile', $this->mobile])
-            ->andFilterWhere(['like', 'imsi', $this->imsi])
-            ->andFilterWhere(['like', 'fee', $this->fee]);
+        $query->andFilterWhere(['like', 'mobile', $this->mobile]);
 
         return $dataProvider;
     }
